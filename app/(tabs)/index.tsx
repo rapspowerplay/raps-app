@@ -1,75 +1,144 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { Image,     
+  ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+// import { Image } from "@/assets/images/astro.jpg";
 
 export default function HomeScreen() {
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Header */}
+      <Text style={styles.header}>🎮 Welcome to RAPS Powerplay</Text>
+      <Text style={styles.subheader}>Your Ultimate Gaming Zone</Text>
+
+      {/* Hero Image */}
+      <Image
+        source={{ uri: "@/assets/images/astro.jpg" }}
+        style={styles.heroImage}
+      />
+
+      {/* Buttons */}
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.button}>
+          <Text style={styles.buttonText}>Book a Session</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.buttonSecondary}>
+          <Text style={styles.buttonText}>Visit Store</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Features */}
+      <Text style={styles.sectionTitle}>🔥 What We Offer</Text>
+      <View style={styles.card}>
+        <Text style={styles.cardText}>✅ PS5 Gaming Sessions</Text>
+        <Text style={styles.cardText}>✅ Snacks & Chill Zone</Text>
+        <Text style={styles.cardText}>✅ Game Tournaments</Text>
+        <Text style={styles.cardText}>✅ Buy Accessories & Games</Text>
+      </View>
+
+      {/* New Section: Popular Games */}
+      <Text style={styles.sectionTitle}>🎯 Popular Games</Text>
+      <View style={styles.card}>
+        <Text style={styles.cardText}>⚡ FIFA 24</Text>
+        <Text style={styles.cardText}>⚡ Call of Duty</Text>
+        <Text style={styles.cardText}>⚡ Spider-Man 2</Text>
+        <Text style={styles.cardText}>⚡ Mortal Kombat</Text>
+      </View>
+
+      {/* New Section: Customer Reviews */}
+      <Text style={styles.sectionTitle}>⭐ Customer Reviews</Text>
+      <View style={styles.card}>
+        <Text style={styles.cardText}>"Best gaming vibe in town!" – Rohan</Text>
+        <Text style={styles.cardText}>
+          "Affordable sessions with friends." – Priya
+        </Text>
+        <Text style={styles.cardText}>
+          "Loved the tournaments and snacks." – Aarav
+        </Text>
+      </View>
+
+      {/* Footer */}
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>© 2025 RAPS Powerplay</Text>
+        <Text style={styles.footerText}>Made with ❤️ by Team RAPS</Text>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: "#111",
+    padding: 20,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  header: {
+    fontSize: 26,
+    fontWeight: "bold",
+    color: "#FF4500",
+    textAlign: "center",
+    marginTop: 20,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  subheader: {
+    fontSize: 16,
+    color: "#bbb",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  heroImage: {
+    width: "100%",
+    height: 200,
+    borderRadius: 15,
+    marginBottom: 20,
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 20,
+  },
+  button: {
+    backgroundColor: "#FF4500",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+  },
+  buttonSecondary: {
+    backgroundColor: "#444",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#fff",
+    marginBottom: 10,
+    marginTop: 20,
+  },
+  card: {
+    backgroundColor: "#222",
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 20,
+  },
+  cardText: {
+    color: "#ddd",
+    fontSize: 14,
+    marginBottom: 5,
+  },
+  footer: {
+    marginTop: 30,
+    padding: 15,
+    borderTopWidth: 1,
+    borderTopColor: "#333",
+  },
+  footerText: {
+    color: "#888",
+    fontSize: 12,
+    textAlign: "center",
   },
 });

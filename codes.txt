@@ -1,0 +1,293 @@
+"use client"
+
+import { useState, useEffect, useRef } from "react"
+import { StyleSheet, Text, View, TouchableOpacity, Alert } from "react-native"
+import { CameraView, useCameraPermissions } from "expo-camera"
+import { GLView } from "expo-gl"
+import { Renderer } from "expo-three"
+import * as THREE from "three"
+
+export default function ARTreasureHunt(): JSX.Element {
+  const [permission, requestPermission] = useCameraPermissions()
+  const [score, setScore] = useState(0)
+  const [showCube, setShowCube] = useState(false)
+  const [gameStarted, setGameStarted] = useState(false)
+  const [timeLeft, setTimeLeft] = useState(30)
+  const [treasuresFound, setTreasuresFound] = useState(0)
+
+  const requestRef = useRef<number | null>(null)
+  const cubeRef = useRef<THREE.Mesh | null>(null)
+  const gameTimerRef = useRef<any>(null)
+
+  useEffect(() => {
+    return () => {
+      if (requestRef.current != null) {
+        cancelAnimationFrame(requestRef.current)
+      }
+      if (gameTimerRef.current) {
+        clearInterval(gameTimerRef.current)
+      }
+    }
+  }, [])
+
+  const startGame = () => {
+    setGameStarted(true)
+    setScore(0)
+    setTreasuresFound(0)
+    setTimeLeft(30)
+
+    gameTimerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          endGame()
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+  }
+
+  const endGame = () => {
+    setGameStarted(false)
+    setShowCube(false)
+    if (cubeRef.current) {
+      cubeRef.current.visible = false
+    }
+    if (gameTimerRef.current) {
+      clearInterval(gameTimerRef.current)
+    }
+
+    Alert.alert("Game Over!", `Final Score: ${score}\nTreasures Found: ${treasuresFound}`, [
+      { text: "Play Again", onPress: startGame },
+    ])
+  }
+
+  const onContextCreate = async (gl: any) => {
+    const { drawingBufferWidth: width, drawingBufferHeight: height } = gl
+
+    // Renderer
+    const renderer = new Renderer({ gl })
+    renderer.setSize(width, height)
+    renderer.setClearColor(0x000000, 0) // Transparent background
+
+    // Scene
+    const scene = new THREE.Scene()
+
+    // Camera (3D)
+    const camera3D = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000)
+    camera3D.position.z = 2
+
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.4)
+    scene.add(ambientLight)
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8)
+    directionalLight.position.set(2, 3, 4)
+    scene.add(directionalLight)
+
+    const geometry = new THREE.BoxGeometry(0.6, 0.6, 0.6)
+    const material = new THREE.MeshPhongMaterial({
+      color: 0xffd700,
+      shininess: 100,
+      specular: 0x111111,
+    })
+    const cube = new THREE.Mesh(geometry, material)
+    cube.visible = false
+    cubeRef.current = cube
+    scene.add(cube)
+
+    // Animation loop
+    const render = () => {
+      requestRef.current = requestAnimationFrame(render)
+      if (cube.visible) {
+        cube.rotation.x += 0.03
+        cube.rotation.y += 0.03
+        cube.position.y = Math.sin(Date.now() * 0.003) * 0.2
+      }
+      renderer.render(scene, camera3D)
+      gl.endFrameEXP()
+    }
+    render()
+  }
+
+  const spawnCube = () => {
+    if (cubeRef.current && gameStarted) {
+      cubeRef.current.position.x = (Math.random() - 0.5) * 2
+      cubeRef.current.position.z = (Math.random() - 0.5) * 1
+      cubeRef.current.visible = true
+      setShowCube(true)
+
+      setTimeout(() => {
+        if (cubeRef.current && cubeRef.current.visible) {
+          cubeRef.current.visible = false
+          setShowCube(false)
+        }
+      }, 3000)
+    }
+  }
+
+  const collectCube = () => {
+    if (cubeRef.current && cubeRef.current.visible) {
+      cubeRef.current.visible = false
+      setScore((prev) => prev + 100)
+      setTreasuresFound((prev) => prev + 1)
+      setShowCube(false)
+
+      setTimeout(() => {
+        if (gameStarted) {
+          spawnCube()
+        }
+      }, 1000)
+    }
+  }
+
+  if (!permission) {
+    return (
+      <View style={styles.center}>
+        <Text>Loading camera permissions...</Text>
+      </View>
+    )
+  }
+
+  if (!permission.granted) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.permissionText}>Camera access is required for AR treasure hunt</Text>
+        <TouchableOpacity style={styles.button} onPress={requestPermission}>
+          <Text style={styles.buttonText}>Grant Permission</Text>
+        </TouchableOpacity>
+      </View>
+    )
+  }
+
+  return (
+    <View style={styles.container}>
+      {/* Camera feed (AR base) */}
+      <CameraView
+        {...({ style: styles.camera, facing: "back" } as any)}
+      />
+
+      {/* GLView for 3D objects */}
+      <GLView style={styles.glView} onContextCreate={onContextCreate} />
+
+      <View style={styles.overlay}>
+        <View style={styles.statsContainer}>
+          <Text style={styles.score}>💰 Score: {score}</Text>
+          <Text style={styles.treasures}>🏆 Found: {treasuresFound}</Text>
+          {gameStarted && <Text style={styles.timer}>⏰ Time: {timeLeft}s</Text>}
+        </View>
+
+        {!gameStarted ? (
+          <TouchableOpacity style={styles.startButton} onPress={startGame}>
+            <Text style={styles.buttonText}>Start Treasure Hunt</Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.gameControls}>
+            {!showCube ? (
+              <TouchableOpacity style={styles.button} onPress={spawnCube}>
+                <Text style={styles.buttonText}>Search for Treasure</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={styles.collectButton} onPress={collectCube}>
+                <Text style={styles.buttonText}>Collect Treasure!</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity style={styles.endButton} onPress={endGame}>
+              <Text style={styles.buttonText}>End Game</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+    </View>
+  )
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  camera: { ...StyleSheet.absoluteFillObject },
+  glView: { ...StyleSheet.absoluteFillObject },
+  overlay: {
+    position: "absolute",
+    bottom: 40,
+    left: 20,
+    right: 20,
+    alignItems: "center",
+  },
+  statsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "100%",
+    marginBottom: 20,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    padding: 10,
+    borderRadius: 10,
+  },
+  score: {
+    color: "#FFD700",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  treasures: {
+    color: "#FF6B35",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  timer: {
+    color: "#FF4444",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  gameControls: {
+    alignItems: "center",
+    gap: 10,
+  },
+  button: {
+    backgroundColor: "#FF4500",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    minWidth: 180,
+    alignItems: "center",
+  },
+  startButton: {
+    backgroundColor: "#4CAF50",
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 10,
+    minWidth: 200,
+    alignItems: "center",
+  },
+  collectButton: {
+    backgroundColor: "#FFD700",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    minWidth: 180,
+    alignItems: "center",
+  },
+  endButton: {
+    backgroundColor: "#FF6B6B",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    minWidth: 120,
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  permissionText: {
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 20,
+    color: "#333",
+  },
+})
